@@ -24,7 +24,8 @@ module.exports = {
         userId: interaction.user.id,
       });
 
-      const resposta = res.data.resposta || "Não consegui uma resposta.";
+      // const resposta = res.data.resposta || "Não consegui uma resposta.";
+      const resposta = res.data.resposta || "Pensando...";
       await interaction.reply(resposta);
     } catch (err) {
       console.error("Erro ao chamar o webhook:", err.message);
