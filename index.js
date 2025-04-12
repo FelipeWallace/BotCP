@@ -1,9 +1,16 @@
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
 const { Client, Collection, GatewayIntentBits, Events } = require("discord.js");
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
 
 client.commands = new Collection();
 
@@ -30,5 +37,37 @@ client.on(Events.InteractionCreate, async interaction => {
     await interaction.reply({ content: "Erro ao executar comando.", ephemeral: true });
   }
 });
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot || !message.mentions.has(client.user)) return;
+
+  // Extrai a pergunta removendo a menção
+  const pergunta = message.content.replace(/<@!?(\d+)>/, '').trim();
+
+  if (!pergunta) {
+    return message.reply("👋 Me mencione com uma pergunta, exemplo: `@PetrinhoIA como está o tempo?`");
+  }
+
+  try {
+    // Chamada para seu webhook ou sistema de IA
+    const resposta = await enviarProWebhook(pergunta, message.author.id);
+    await message.reply(resposta);
+  } catch (err) {
+    console.error("Erro ao buscar resposta:", err);
+    await message.reply("❌ Tive um erro ao processar sua pergunta.");
+  }
+});
+
+
+
+async function enviarProWebhook(pergunta, userId) {
+  const response = await axios.post(process.env.N8N_WEBHOOK, {
+    pergunta,
+    userId
+  });
+
+  return response.data.resposta || "🤖 Pensando...";
+}
+
 
 client.login(process.env.DISCORD_BOT_TOKEN);
