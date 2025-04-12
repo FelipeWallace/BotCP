@@ -58,8 +58,6 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-
-
 async function enviarProWebhook(pergunta, userId) {
   const response = await axios.post(process.env.N8N_WEBHOOK, {
     pergunta,

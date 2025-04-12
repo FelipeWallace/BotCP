@@ -18,9 +18,9 @@ module.exports = {
 
     try {
       const res = await axios.post(webhook, {
-        question: pergunta,
-        user: interaction.user.username,
-        channelId: interaction.channel.id,
+        pergunta: pergunta,
+        // user: interaction.user.username,
+        // channelId: interaction.channel.id,
         userId: interaction.user.id,
       });
 
