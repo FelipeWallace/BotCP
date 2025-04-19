@@ -8,7 +8,7 @@ Este bot permite que usuários interajam com uma Inteligência Artificial atrav�
 
 ### 1. Clone o projeto
 ```bash
-git clone https://github.com/seu-usuario/seu-repo.git
+git clone https://github.com/FelipeWallace/BotCP.git
 cd seu-repo
 ```
 
