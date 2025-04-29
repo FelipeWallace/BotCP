@@ -40,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.on(Events.MessageCreate, async (message) => {
   if (
-    message.author.bot ||                             // Ignora mensagens de outros bots
+    message.author.bot ||                             
     !message.mentions.users.has(client.user.id) ||    // Ignora se o bot não for mencionado diretamente
     message.mentions.everyone                         // Ignora @everyone e @here
   ) return;
