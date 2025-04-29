@@ -40,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.on(Events.MessageCreate, async (message) => {
   if (
-    message.author.bot ||                             
+    message.author.bot ||                             // Ignora mensagens de bots
     !message.mentions.users.has(client.user.id) ||    // Ignora se o bot não for mencionado diretamente
     message.mentions.everyone                         // Ignora @everyone e @here
   ) return;
@@ -49,7 +49,7 @@ client.on(Events.MessageCreate, async (message) => {
   const pergunta = message.content.replace(/<@!?(\d+)>/, '').trim();
 
   if (!pergunta) {
-    return message.reply("👋 Me mencione com uma pergunta, exemplo: `@PetrinhoIA como está o tempo?`");
+    return message.reply("👋 Me mencione com uma pergunta");
   }
 
   try {
