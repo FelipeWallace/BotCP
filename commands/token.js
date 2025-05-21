@@ -36,7 +36,11 @@ module.exports = {
         return await interaction.reply("Erro ao decodificar o token.");
       }
 
-      await interaction.reply(`🔓 **Token decodificado:**\n🆔 UUID: \`${uuid}\`\n🏢 CNPJ: \`${cnpj}\``);
+      // await interaction.reply(`🔓 **Token decodificado:**\n🆔 UUID: \`${uuid}\`\n🏢 CNPJ: \`${cnpj}\``);
+      await interaction.reply(
+        `**Token decodificado:**\n🆔 UUID:\n\`\`\`\n${uuid}\n\`\`\`\n⛽ CNPJ:\n\`\`\`\n${cnpj}\n\`\`\``
+      );
+
 
     } catch (error) {
       console.error("Erro ao buscar ou decodificar token:", error.message);
