@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 
 module.exports = {
@@ -17,6 +17,9 @@ module.exports = {
     const endpoint = process.env.TOKEN_ENDPOINT;
 
     try {
+      // Defer reply para evitar timeout
+      await interaction.deferReply();
+
       // Faz a requisição POST com o código informado
       const response = await axios.post(endpoint, {
         document: codigo,
@@ -25,26 +28,43 @@ module.exports = {
       const tokenBase64 = response.data.token;
 
       if (!tokenBase64) {
-        return await interaction.reply("Token não encontrado na resposta da API.");
+        return await interaction.editReply("Token não encontrado na resposta da API.");
       }
 
       // Decodifica o token Base64
-      const decoded = atob(tokenBase64); // Função nativa do browser/node >= 16+
+      const decoded = Buffer.from(tokenBase64, "base64").toString("utf-8");
       const [uuid, cnpj] = decoded.split(":");
 
       if (!uuid || !cnpj) {
-        return await interaction.reply("Erro ao decodificar o token.");
+        return await interaction.editReply("Erro ao decodificar o token.");
       }
 
-      // await interaction.reply(`🔓 **Token decodificado:**\n🆔 UUID: \`${uuid}\`\n🏢 CNPJ: \`${cnpj}\``);
-      await interaction.reply(
-        `**Token decodificado:**\n🆔 UUID:\n\`\`\`\n${uuid}\n\`\`\`\n⛽ CNPJ:\n\`\`\`\n${cnpj}\n\`\`\``
-      );
+      const embed = new EmbedBuilder()
+        .setTitle("🔓 Token decodificado")
+        .setColor(0x2ecc71)
+        .addFields(
+          {
+            name: "🆔 UUID",
+            value: `\`\`\`\n${uuid}\n\`\`\``,
+            inline: false
+          },
+          {
+            name: "⛽ CNPJ",
+            value: `\`\`\`\n${cnpj}\n\`\`\``,
+            inline: false
+          }
+        )
+        .setTimestamp();
 
+      await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error("Erro ao buscar ou decodificar token:", error.message);
-      await interaction.reply("❌ Ocorreu um erro ao buscar ou decodificar o token.");
+      if (interaction.deferred) {
+        await interaction.editReply("❌ Ocorreu um erro ao buscar ou decodificar o token.");
+      } else {
+        await interaction.reply("❌ Ocorreu um erro ao buscar ou decodificar o token.");
+      }
     }
   },
 };
