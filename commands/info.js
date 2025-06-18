@@ -5,82 +5,92 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('info')
-        .setDescription('Consulta informações de uma loja pelo CNPJ ou Store ID')
-        .addStringOption(option =>
-            option.setName('documento')
-                .setDescription('CNPJ da loja (somente números)')
-                .setRequired(false))
-        .addStringOption(option =>
-            option.setName('storeid')
-                .setDescription('ID interno da loja no sistema')
-                .setRequired(false)
-        ),
+  data: new SlashCommandBuilder()
+    .setName('info')
+    .setDescription('Consulta informações de uma loja pelo CNPJ ou Store ID')
+    .addStringOption(option =>
+      option.setName('documento')
+        .setDescription('CNPJ da loja (somente números)')
+        .setRequired(false))
+    .addStringOption(option =>
+      option.setName('storeid')
+        .setDescription('ID interno da loja no sistema')
+        .setRequired(false)
+    ),
 
-    async execute(interaction) {
-        const cnpj = interaction.options.getString('documento');
-        const storeId = interaction.options.getString('storeid');
+  async execute(interaction) {
+    await interaction.deferReply();
 
-        // Validação: precisa escolher pelo menos um
-        if (!cnpj && !storeId) {
-            return await interaction.reply('❌ Por favor, forneça **documento** ou **storeId** para buscar.');
-        }
+    const cnpj = interaction.options.getString('documento');
+    const storeId = interaction.options.getString('storeid');
 
-        let query;
+    if (!cnpj && !storeId) {
+      return await interaction.editReply('❌ Por favor, forneça **documento** ou **storeId** para buscar.');
+    }
 
-        if (cnpj) {
-            query = supabase
-                .from('BD_Core_Stores')
-                .select('*')
-                .eq('document', cnpj)
-                .single();
-        } else if (storeId) {
-            query = supabase
-                .from('BD_Core_Stores')
-                .select('*')
-                .eq('id', storeId)
-                .single();
-        }
+    if (cnpj && !/^\d{14}$/.test(cnpj)) {
+      return await interaction.editReply('❌ CNPJ inválido. Use somente os 14 números (sem pontuação).');
+    }
 
-        const { data, error } = await query;
+    let query;
 
-        if (error || !data) {
-            return await interaction.reply('❌ Loja não encontrada ou erro ao consultar os dados.');
-        }
+    if (cnpj) {
+      query = supabase
+        .from('BD_Core_Stores')
+        .select('*')
+        .eq('document', cnpj)
+        .single();
+    } else if (storeId) {
+      query = supabase
+        .from('BD_Core_Stores')
+        .select('*')
+        .eq('id', storeId)
+        .single();
+    }
 
-        const loja = data;
+    const { data: loja, error } = await query;
 
-        // Segunda consulta: dados do programa da loja
-        const { data: rede, error: erroRede } = await supabase
-            .from('BD_Core_Programs') // ou 'rede', dependendo do nome real da tabela
-            .select('*')
-            .eq('id', loja.programId)
-            .single();
+    if (error || !loja) {
+      const erroEmbed = new EmbedBuilder()
+        .setTitle("❌ Loja não encontrada")
+        .setDescription("Verifique se o CNPJ ou Store ID estão corretos.")
+        .setColor(0xed4245);
+      return await interaction.editReply({ embeds: [erroEmbed] });
+    }
 
-        if (erroRede || !rede) {
-            return await interaction.reply('❌ Loja encontrada, mas erro ao consultar os dados do programa.');
-        }
+    const { data: rede, error: erroRede } = await supabase
+      .from('BD_Core_Programs')
+      .select('*')
+      .eq('id', loja.programId)
+      .single();
 
-        const statusLoja = loja.status === true ? '✅ Ativa' : '❌ Inativa';
-        // const statusRede = rede.status === true ? '✅ Ativa' : '❌ Inativa';
+    if (erroRede || !rede) {
+      const erroEmbed = new EmbedBuilder()
+        .setTitle("⚠️ Loja encontrada, mas erro ao buscar programa")
+        .setDescription("A loja foi localizada, mas não foi possível buscar os dados da rede associada.")
+        .setColor(0xf1c40f);
+      return await interaction.editReply({ embeds: [erroEmbed] });
+    }
 
-        const lojaEmbed = new EmbedBuilder()
-            .setTitle('🏪 Informações da Loja')
-            .setColor(0x2b8cc4)
-            .setThumbnail(rede.image_url || undefined)
-            .addFields(
-                { name: '🆔 Store ID', value: `\`\`\`${loja.id}\`\`\``, inline: false },
-                { name: '📄 CNPJ', value: `\`\`\`${loja.document}\`\`\``, inline: false },
-                { name: '🏷️ Nome', value: `\`\`\`${loja.name || 'Não informado'}\`\`\``, inline: false },
-                { name: '🔗 Programa ID', value: `\`\`\`${loja.programId || 'N/D'}\`\`\``, inline: false },
-                { name: '🏷️ Nome da Rede', value: `\`${rede.name || 'Não informado'}\``, inline: false },
-                { name: '📶 Status da Loja', value: statusLoja, inline: true },
-                { name: '🧩 Segmento', value: `\`${rede.segment || 'N/D'}\``, inline: true },
-                { name: '👤 CSM', value: `\`${rede.CSM || 'N/D'}\``, inline: true },
-                { name: '🏷️ White Label', value: rede.is_white_label ? 'Sim' : 'Não', inline: true }
-            )
+    const statusLoja = loja.status === true ? '✅ Ativa' : '❌ Inativa';
 
-        await interaction.reply({ embeds: [lojaEmbed] });
-    },
+    const lojaEmbed = new EmbedBuilder()
+      .setTitle('🏪 Informações da Loja')
+      .setColor(0x2b8cc4)
+      .setThumbnail(rede.image_url || null)
+      .addFields(
+        { name: '🆔 Store ID', value: `\`\`\`${loja.id}\`\`\``, inline: false },
+        { name: '📄 CNPJ', value: `\`\`\`${loja.document}\`\`\``, inline: false },
+        { name: '🏷️ Nome da Loja', value: `\`\`\`${loja.name || 'Não informado'}\`\`\``, inline: false },
+        { name: '🔗 Programa ID', value: `\`\`\`${loja.programId || 'N/D'}\`\`\``, inline: false },
+        { name: '🏷️ Nome da Rede', value: `\`${rede.name || 'Não informado'}\``, inline: true },
+        { name: '🧩 Segmento', value: `\`${rede.segment || 'N/D'}\``, inline: true },
+        { name: '👤 CSM', value: `\`${rede.CSM || 'N/D'}\``, inline: true },
+        { name: '📶 Status da Loja', value: statusLoja, inline: true },
+        { name: '🏷️ White Label', value: rede.is_white_label ? 'Sim' : 'Não', inline: true }
+      )
+      .setTimestamp();
+
+    await interaction.editReply({ embeds: [lojaEmbed] });
+  },
 };
