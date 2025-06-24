@@ -73,6 +73,7 @@ module.exports = {
     }
 
     const statusLoja = loja.status === true ? '✅ Ativa' : '❌ Inativa';
+    const isWhiteLabel = rede.is_white_label === "true" ? "✅ Sim" : rede.is_white_label === "false" ? "❌ Não" : "⚠️ Não informado";
 
     const lojaEmbed = new EmbedBuilder()
       .setTitle('🏪 Informações da Loja')
@@ -87,7 +88,7 @@ module.exports = {
         { name: '🧩 Segmento', value: `\`${rede.segment || 'N/D'}\``, inline: true },
         { name: '👤 CSM', value: `\`${rede.CSM || 'N/D'}\``, inline: true },
         { name: '📶 Status da Loja', value: statusLoja, inline: true },
-        { name: '🏷️ White Label', value: rede.is_white_label ? 'Sim' : 'Não', inline: true }
+        { name: '🏷️ White Label', value: isWhiteLabel, inline: true }
       )
       .setTimestamp();
 
