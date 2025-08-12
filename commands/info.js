@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { createClient } = require('@supabase/supabase-js');
 
-// Conexão com o Supabase
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_CLIENTES_URL,
+  process.env.SUPABASE_CLIENTES_ANON_KEY
+);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -10,7 +12,7 @@ module.exports = {
     .setDescription('Consulta informações de uma loja pelo CNPJ ou Store ID')
     .addStringOption(option =>
       option.setName('documento')
-        .setDescription('CNPJ da loja (somente números)')
+        .setDescription('CNPJ da loja (com ou sem máscara)')
         .setRequired(false))
     .addStringOption(option =>
       option.setName('storeid')
@@ -19,17 +21,21 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: 64 });
 
-    const cnpj = interaction.options.getString('documento');
+    let cnpj = interaction.options.getString('documento');
     const storeId = interaction.options.getString('storeid');
 
     if (!cnpj && !storeId) {
       return await interaction.editReply('❌ Por favor, forneça **documento** ou **storeId** para buscar.');
     }
 
-    if (cnpj && !/^\d{14}$/.test(cnpj)) {
-      return await interaction.editReply('❌ CNPJ inválido. Use somente os 14 números (sem pontuação).');
+    if (cnpj) {
+      cnpj = cnpj.replace(/\D/g, '');
+
+      if (cnpj.length !== 14) {
+        return await interaction.editReply('❌ CNPJ inválido.');
+      }
     }
 
     let query;
