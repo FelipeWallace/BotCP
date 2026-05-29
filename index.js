@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const REQUIRED_ENV_VARS = [
-  'DISCORD_BOT_TOKEN',
+  'DISCORD_TOKEN',
   'DISCORD_CLIENT_ID',
   'DISCORD_GUILD_ID',
   'N8N_WEBHOOK',
@@ -119,7 +119,7 @@ const shutdown = (signal) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-client.login(process.env.DISCORD_BOT_TOKEN);
+client.login(process.env.DISCORD_TOKEN);
 
 // Servidor HTTP para manter o serviço ativo no Render (keep-alive via UptimeRobot)
 const PORT = process.env.PORT || 3000;
