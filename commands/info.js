@@ -1,10 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_CLIENTES_URL,
-  process.env.SUPABASE_CLIENTES_ANON_KEY
-);
+const { supabaseClientes: supabase } = require('../lib/supabase');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -40,16 +35,18 @@ module.exports = {
 
     let query;
 
+    const storeFields = 'id, document, name, programId, status';
+
     if (cnpj) {
       query = supabase
         .from('BD_Core_Stores')
-        .select('*')
+        .select(storeFields)
         .eq('document', cnpj)
         .single();
     } else if (storeId) {
       query = supabase
         .from('BD_Core_Stores')
-        .select('*')
+        .select(storeFields)
         .eq('id', storeId)
         .single();
     }
@@ -66,7 +63,7 @@ module.exports = {
 
     const { data: rede } = await supabase
       .from('BD_Core_Programs')
-      .select('*')
+      .select('name, segment, CSM, is_white_label, image_url')
       .eq('id', loja.programId)
       .single();
 

@@ -1,16 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseClientes, supabaseGestao } = require('../lib/supabase');
 const dayjs = require('dayjs');
-
-const supabaseClientes = createClient(
-    process.env.SUPABASE_CLIENTES_URL,
-    process.env.SUPABASE_CLIENTES_ANON_KEY
-);
-
-const supabaseGestao = createClient(
-    process.env.SUPABASE_GESTAO_URL,
-    process.env.SUPABASE_GESTAO_ANON_KEY
-);
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -62,6 +52,14 @@ module.exports = {
 
                 finalId = storeData.id;
                 storeName = storeData.name;
+            } else if (finalId) {
+                const { data: storeData } = await supabaseClientes
+                    .from('BD_Core_Stores')
+                    .select('name')
+                    .eq('id', finalId)
+                    .single();
+
+                if (storeData) storeName = storeData.name;
             }
 
             const { data: ticketsLoja } = await supabaseGestao

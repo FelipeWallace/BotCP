@@ -14,17 +14,12 @@ module.exports = {
   async execute(interaction) {
     let telefoneInput = interaction.options.getString('telefone').replace(/\D/g, '');
 
-    if (telefoneInput.startsWith('55') && telefoneInput.length === 13) {}
-    
-    else if (telefoneInput.length === 11) {
+    if (telefoneInput.length === 11) {
       telefoneInput = '55' + telefoneInput;
-    }
-    // Caso 3: Começa com DDD 55 (Rio Grande do Sul) e tem 11 dígitos no total (falta DDI)
-    else if (telefoneInput.startsWith('55') && telefoneInput.length === 11) {
+    } else if (telefoneInput.startsWith('55') && telefoneInput.length === 11) {
+      // DDD 55 (RS) sem DDI
       telefoneInput = '55' + telefoneInput;
-    }
-
-    else {
+    } else if (!telefoneInput.startsWith('55') || telefoneInput.length !== 13) {
       return await interaction.reply({
         content: '❌ Número inválido. O formato correto é DDI+DDD+Número (ex: 5511999999999).',
         flags: 64
