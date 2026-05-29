@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
+const axios = require("axios");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,25 +12,22 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
-    const axios = require("axios");
-    const webhook = process.env.N8N_WEBHOOK;
+    await interaction.deferReply();
 
+    const webhook = process.env.N8N_WEBHOOK;
     const pergunta = interaction.options.getString("pergunta");
 
     try {
       const res = await axios.post(webhook, {
-        pergunta: pergunta,
-        // user: interaction.user.username,
-        // channelId: interaction.channel.id,
+        pergunta,
         userId: interaction.user.id,
       });
 
-      // const resposta = res.data.resposta || "Não consegui uma resposta.";
       const resposta = res.data.resposta || "Pensando...";
-      await interaction.reply(resposta);
+      await interaction.editReply(resposta);
     } catch (err) {
       console.error("Erro ao chamar o webhook:", err.message);
-      await interaction.reply("Erro ao tentar obter a resposta da IA.");
+      await interaction.editReply("Erro ao tentar obter a resposta da IA.");
     }
   },
 };

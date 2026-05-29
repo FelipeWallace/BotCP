@@ -1,4 +1,25 @@
 require("dotenv").config();
+
+const REQUIRED_ENV_VARS = [
+  'DISCORD_BOT_TOKEN',
+  'DISCORD_CLIENT_ID',
+  'DISCORD_GUILD_ID',
+  'N8N_WEBHOOK',
+  'SUPABASE_CLIENTES_URL',
+  'SUPABASE_CLIENTES_ANON_KEY',
+  'SUPABASE_GESTAO_URL',
+  'SUPABASE_GESTAO_ANON_KEY',
+  'TOKEN_ENDPOINT',
+  'PIN_ENDPOINT',
+];
+
+const missingVars = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error('❌ Variáveis de ambiente obrigatórias ausentes:');
+  missingVars.forEach(v => console.error(`   - ${v}`));
+  process.exit(1);
+}
+
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
@@ -42,7 +63,12 @@ client.on(Events.InteractionCreate, async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error("Erro ao executar comando:", error);
-    await interaction.reply({ content: "Erro ao executar comando.", ephemeral: true });
+    const reply = { content: "Erro ao executar comando.", ephemeral: true };
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply(reply);
+    } else {
+      await interaction.reply(reply);
+    }
   }
 });
 
@@ -79,6 +105,19 @@ async function enviarProWebhook(pergunta, userId) {
   return response.data.resposta || "🤖 Pensando...";
 }
 
+
+process.on('unhandledRejection', (error) => {
+  console.error('❌ Erro não tratado:', error);
+});
+
+const shutdown = (signal) => {
+  console.log(`\n⚠️  Sinal ${signal} recebido. Encerrando bot...`);
+  client.destroy();
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
