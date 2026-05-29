@@ -64,39 +64,37 @@ module.exports = {
       return await interaction.editReply({ embeds: [erroEmbed] });
     }
 
-    const { data: rede, error: erroRede } = await supabase
+    const { data: rede } = await supabase
       .from('BD_Core_Programs')
       .select('*')
       .eq('id', loja.programId)
       .single();
 
-    if (erroRede || !rede) {
-      const erroEmbed = new EmbedBuilder()
-        .setTitle("⚠️ Loja encontrada, mas erro ao buscar programa")
-        .setDescription("A loja foi localizada, mas não foi possível buscar os dados da rede associada.")
-        .setColor(0xf1c40f);
-      return await interaction.editReply({ embeds: [erroEmbed] });
-    }
-
     const statusLoja = loja.status === true ? '✅ Ativa' : '❌ Inativa';
-    const isWhiteLabel = rede.is_white_label === "true" ? "✅ Sim" : rede.is_white_label === "false" ? "❌ Não" : "⚠️ Não informado";
 
     const lojaEmbed = new EmbedBuilder()
       .setTitle('🏪 Informações da Loja')
       .setColor(0x2b8cc4)
-      .setThumbnail(rede.image_url || null)
-      .addFields(
-        { name: '🆔 Store ID', value: `\`\`\`${loja.id}\`\`\``, inline: false },
-        { name: '📄 CNPJ', value: `\`\`\`${loja.document}\`\`\``, inline: false },
-        { name: '🏷️ Nome da Loja', value: `\`\`\`${loja.name || 'Não informado'}\`\`\``, inline: false },
-        { name: '🔗 Programa ID', value: `\`\`\`${loja.programId || 'N/D'}\`\`\``, inline: false },
+      .setTimestamp();
+
+    lojaEmbed.addFields(
+      { name: '🆔 Store ID', value: `\`\`\`${loja.id}\`\`\``, inline: false },
+      { name: '📄 CNPJ', value: `\`\`\`${loja.document}\`\`\``, inline: false },
+      { name: '🏷️ Nome da Loja', value: `\`\`\`${loja.name || 'Não informado'}\`\`\``, inline: false },
+      { name: '🔗 Programa ID', value: `\`\`\`${loja.programId || 'N/D'}\`\`\``, inline: false },
+      { name: '📶 Status da Loja', value: statusLoja, inline: true },
+    );
+
+    if (rede) {
+      const isWhiteLabel = rede.is_white_label === "true" ? "✅ Sim" : rede.is_white_label === "false" ? "❌ Não" : "⚠️ Não informado";
+      lojaEmbed.setThumbnail(rede.image_url || null);
+      lojaEmbed.addFields(
         { name: '🏷️ Nome da Rede', value: `\`${rede.name || 'Não informado'}\``, inline: true },
         { name: '🧩 Segmento', value: `\`${rede.segment || 'N/D'}\``, inline: true },
         { name: '👤 CSM', value: `\`${rede.CSM || 'N/D'}\``, inline: true },
-        { name: '📶 Status da Loja', value: statusLoja, inline: true },
-        { name: '🏷️ White Label', value: isWhiteLabel, inline: true }
-      )
-      .setTimestamp();
+        { name: '🏷️ White Label', value: isWhiteLabel, inline: true },
+      );
+    }
 
     await interaction.editReply({ embeds: [lojaEmbed] });
   },

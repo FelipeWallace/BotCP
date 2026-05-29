@@ -1,6 +1,7 @@
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
+const http = require("http");
 const axios = require("axios");
 const { Client, Collection, GatewayIntentBits, Events } = require("discord.js");
 
@@ -21,7 +22,14 @@ for (const file of commandFiles) {
 }
 
 client.once(Events.ClientReady, () => {
-  console.log(`✅ Bot logado como ${client.user.tag}`);
+  const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  console.log('─────────────────────────────────────');
+  console.log(`✅ Bot online!`);
+  console.log(`   Tag:       ${client.user.tag}`);
+  console.log(`   Servidores: ${client.guilds.cache.size}`);
+  console.log(`   Comandos:  ${client.commands.size}`);
+  console.log(`   Iniciado:  ${timestamp}`);
+  console.log('─────────────────────────────────────');
 });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -73,3 +81,25 @@ async function enviarProWebhook(pergunta, userId) {
 
 
 client.login(process.env.DISCORD_BOT_TOKEN);
+
+// Servidor HTTP para manter o serviço ativo no Render (keep-alive via UptimeRobot)
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  const uptime = process.uptime();
+  const horas = Math.floor(uptime / 3600);
+  const minutos = Math.floor((uptime % 3600) / 60);
+  const segundos = Math.floor(uptime % 60);
+
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({
+    status: 'online',
+    bot: client.user?.tag ?? 'carregando...',
+    servidores: client.guilds.cache.size,
+    comandos: client.commands.size,
+    uptime: `${horas}h ${minutos}m ${segundos}s`,
+  }));
+}).listen(PORT, () => {
+  console.log('─────────────────────────────────────');
+  console.log(`🌐 Keep-alive ativo na porta ${PORT}`);
+  console.log('─────────────────────────────────────');
+});
