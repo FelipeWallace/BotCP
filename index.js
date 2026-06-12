@@ -63,11 +63,19 @@ client.on(Events.InteractionCreate, async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error("Erro ao executar comando:", error);
-    const reply = { content: "Erro ao executar comando.", ephemeral: true };
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(reply);
-    } else {
-      await interaction.reply(reply);
+
+    // 10062 (Unknown interaction): o token da interação já expirou, então
+    // qualquer tentativa de resposta falharia de novo — apenas registra e sai.
+    if (error?.code === 10062) return;
+
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: "Erro ao executar comando." });
+      } else {
+        await interaction.reply({ content: "Erro ao executar comando.", flags: 64 });
+      }
+    } catch (replyError) {
+      console.error("Falha ao enviar mensagem de erro ao usuário:", replyError);
     }
   }
 });

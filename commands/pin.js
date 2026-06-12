@@ -12,6 +12,8 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    await interaction.deferReply({ flags: 64 });
+
     let telefoneInput = interaction.options.getString('telefone').replace(/\D/g, '');
 
     if (telefoneInput.length === 11) {
@@ -20,9 +22,8 @@ module.exports = {
       // DDD 55 (RS) sem DDI
       telefoneInput = '55' + telefoneInput;
     } else if (!telefoneInput.startsWith('55') || telefoneInput.length !== 13) {
-      return await interaction.reply({
-        content: '❌ Número inválido. O formato correto é DDI+DDD+Número (ex: 5511999999999).',
-        flags: 64
+      return await interaction.editReply({
+        content: '❌ Número inválido. O formato correto é DDI+DDD+Número (ex: 5511999999999).'
       });
     }
 
@@ -36,9 +37,8 @@ module.exports = {
       const token = response.data.token || null;
 
       if (!token || token.length !== 6) {
-        return await interaction.reply({
-          content: '❌ PIN não encontrado.',
-          flags: 64
+        return await interaction.editReply({
+          content: '❌ PIN não encontrado.'
         });
       }
 
@@ -51,13 +51,12 @@ module.exports = {
         )
         .setTimestamp();
 
-      await interaction.reply({ embeds: [embed], flags: 64 });
+      await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Erro ao gerar PIN:', error.message);
-      await interaction.reply({
-        content: '❌ Erro ao comunicar com o servidor.',
-        flags: 64
+      await interaction.editReply({
+        content: '❌ Erro ao comunicar com o servidor.'
       });
     }
   }
