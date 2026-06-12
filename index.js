@@ -137,12 +137,20 @@ http.createServer((req, res) => {
   const minutos = Math.floor((uptime % 3600) / 60);
   const segundos = Math.floor(uptime % 60);
 
-  res.writeHead(200, { 'Content-Type': 'application/json' });
+  // ws.status === 0 significa READY (gateway conectado e saudavel)
+  const gatewayPronto = client.ws.status === 0;
+  // ws.ping = latencia do heartbeat com o gateway do Discord, em ms.
+  // Valor alto (centenas/milhares) = instancia estrangulada -> causa o 10062.
+  const pingMs = Math.round(client.ws.ping);
+
+  res.writeHead(gatewayPronto ? 200 : 503, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({
-    status: 'online',
+    status: gatewayPronto ? 'online' : 'gateway_offline',
     bot: client.user?.tag ?? 'carregando...',
     servidores: client.guilds.cache.size,
     comandos: client.commands.size,
+    gateway_pronto: gatewayPronto,
+    gateway_ping_ms: pingMs,
     uptime: `${horas}h ${minutos}m ${segundos}s`,
   }));
 }).listen(PORT, () => {
