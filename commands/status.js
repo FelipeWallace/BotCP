@@ -6,6 +6,8 @@ module.exports = {
         .setDescription('Exibe o status atual do bot'),
 
     async execute(interaction) {
+        await interaction.deferReply({ flags: 64 });
+
         const uptime = process.uptime();
         const horas = Math.floor(uptime / 3600);
         const minutos = Math.floor((uptime % 3600) / 60);
@@ -23,6 +25,6 @@ module.exports = {
             )
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], flags: 64 });
+        await interaction.editReply({ embeds: [embed] });
     },
 };
